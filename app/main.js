@@ -14,7 +14,7 @@ const server = net.createServer((socket) => {
   socket.on("data", async (data) => {
     const request = data.toString();
     const reqParts = request.split("\r\n");
-    const [requestVerb, path] = reqParts[0].split(" ")[0];
+    const [requestVerb, path] = reqParts[0].split(" ");
 
     const userAgentHeader = reqParts.find((part) =>
       part.startsWith("User-Agent")
