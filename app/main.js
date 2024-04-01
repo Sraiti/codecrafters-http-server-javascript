@@ -1,4 +1,4 @@
-const { readFile } = require("fs/promises");
+const { readFile, writeFile } = require("fs/promises");
 const net = require("net");
 
 // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -17,6 +17,7 @@ const server = net.createServer((socket) => {
 
     const reqParts = request.split("\r\n");
 
+    const requestVerb = reqParts[0].split(" ")[0];
     console.log({ reqParts });
 
     const userAgentHeader = reqParts.find((part) =>
@@ -62,7 +63,7 @@ const server = net.createServer((socket) => {
       );
     }
 
-    if (path.startsWith("/files")) {
+    if (requestVerb === "GET" && path.startsWith("/files")) {
       const directory = getArgValue();
 
       const fileName = path.split("/").pop();
@@ -82,6 +83,20 @@ const server = net.createServer((socket) => {
           `HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${fileContent.length}\r\n\r\n${fileContent}`
         );
       }
+    }
+    if (requestVerb === "POST" && path.startsWith("/files")) {
+      const directory = getArgValue();
+      const fileName = path.split("/").pop();
+
+      const payload = reqParts[reqParts.length - 1];
+      console.log({ directory, fileName });
+
+      await writeFile(`${directory}${fileName}`, payload).catch((err) => {
+        socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+        socket.end();
+      });
+
+      socket.write(`HTTP/1.1 201 OK\r\n\r\n`);
     }
 
     socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
