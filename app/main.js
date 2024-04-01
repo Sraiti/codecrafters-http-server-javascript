@@ -8,7 +8,25 @@ const server = net.createServer((socket) => {
   socket.on("data", (data) => {
     const request = data.toString();
 
-    const path = request.split(" ")[1];
+    const reqParts = request.split("\r\n");
+
+    console.log({ reqParts });
+
+    const userAgentHeader = reqParts.find((part) =>
+      part.startsWith("User-Agent")
+    );
+
+    console.log({
+      userAgentHeader,
+    });
+
+    const userAgent = userAgentHeader ? userAgentHeader.split(": ")[1] : null;
+
+    console.log({
+      userAgent,
+    });
+
+    const path = reqParts[0].split(" ")[1];
 
     const pathParam = path.substring(6);
 
@@ -22,6 +40,14 @@ const server = net.createServer((socket) => {
       console.log("echo", pathParam);
       socket.write(
         `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${pathParam.length}\r\n\r\n${pathParam}`
+      );
+    }
+
+    if (path.startsWith("/user-agent") && userAgent) {
+      console.log({ userAgent });
+
+      socket.write(
+        `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgent.length}\r\n\r\n${userAgent}`
       );
     }
 
